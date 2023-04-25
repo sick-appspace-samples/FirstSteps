@@ -29,7 +29,6 @@ local POLYGON_CHANGED = {
 local BLUE = {59, 156, 208}
 local GRAY = {200, 200, 200}
 local ORANGE = {242, 148, 0}
-local DARK_GRAY = {150, 150, 150}
 local RED = {200, 0, 0}
 
 local SAMPLE_DISTANCE = 0.05 --mm
@@ -37,16 +36,11 @@ local SAMPLE_DISTANCE = 0.05 --mm
 local DELAY = 1500
 
 local viewer = View.create()
-local xAxis
-local background
 
 local function graphDeco(color, headline, overlay)
-  local deco = View.GraphDecoration.create()
+  local deco = View.GraphDecoration.create():setDrawSize(0.5)
   deco:setGraphColor(color[1], color[2], color[3], color[4] or 255)
-  deco:setTitle(headline or '')
-  deco:setGraphType('LINE')
-  deco:setAspectRatio('EQUAL')
-  deco:setDrawSize(0.5)
+  deco:setTitle(headline or ''):setGraphType('LINE'):setAspectRatio('EQUAL')
   if overlay then
     deco:setAxisVisible(false)
     deco:setBackgroundVisible(false)
@@ -72,7 +66,7 @@ end
 
 local function addProfile(p, c, headline, overlay)
   if (overlay) then
-    viewer:addProfile(p, graphDeco(c, headline, overlay), 'overlay')
+    viewer:addProfile(p, graphDeco(c, headline, overlay), 'overlay', 'profile')
   else
     viewer:addProfile(p, graphDeco(c, headline, false), 'profile')
   end
@@ -88,22 +82,17 @@ local function addText(t, c, s, x, y)
   viewer:addText(t, helper.getTextDeco(c, s, x, y))
 end
 
-local function resetView()
-  viewer:clear()
-  addShape(background, {255, 255, 255})
-  addShape(xAxis, DARK_GRAY, 0.3)
-end
-
---@presentAndWait(delay:float)
-local function presentAndWait(delay)
-  delay = delay or DELAY
+--@presentAndWait()
+local function presentAndWait()
   viewer:present()
-  Script.sleep(delay)
+  Script.sleep(DELAY)
 end
 
 local function main()
-  local profile = helper.polygonToProfile(POLYGON, SAMPLE_DISTANCE)
-  local profileChanged = helper.polygonToProfile(POLYGON_CHANGED, SAMPLE_DISTANCE)
+  local profile = Profile.createFromPoints(POLYGON)
+  profile = Profile.resizeScale(profile, 1200/9)
+  local profileChanged = Profile.createFromPoints(POLYGON_CHANGED)
+  profileChanged = Profile.resizeScale(profileChanged, 1200/8)
 
   -- Derivatives
   local firstDerivative = profile:gaussDerivative(15, 'FIRST')
@@ -123,10 +112,7 @@ local function main()
     extremaIndices[#extremaIndices + 1] = min
   end
   table.sort(extremaIndices)
-  local knees = {}
-  for _, extremaIndex in pairs(extremaIndices) do
-    knees[#knees + 1] = Point.create(profile:getCoordinate(extremaIndex), profile:getValue(extremaIndex))
-  end
+  local knees = Point.create(profile:getCoordinate(extremaIndices), profile:getValue(extremaIndices))
 
   -- Gauss
   local gaussedProfile = profile:gauss(45)
@@ -150,55 +136,52 @@ local function main()
   -------------------------
   -- View -----------------
   -------------------------
-  local min, max = helper.getProfileBoundingBox({profile, profileChanged, firstDerivative, secondDerivative})
-  xAxis = Shape.createLineSegment(Point.create(min:getX(), 0), Point.create(max:getX(), 0))
-  background = Shape.createRectangle(Point.divideConstant(max:add(min), 2),
-                                     max:getX() - min:getX() + 20, max:getY() - min:getY() + 20)
-
   -- Display reference profile
-  resetView()
+  viewer:clear()
   addProfile(profile, BLUE, 'Reference profile')
   presentAndWait()
 
   -- Display smoothed profile
-  resetView()
-  addProfile(profile, GRAY)
-  addProfile(gaussedProfile, BLUE, 'Smoothed profile')
+  viewer:clear()
+  addProfile(profile, GRAY,'Smoothed profile')
+  addProfile(gaussedProfile, BLUE, '', true)
   presentAndWait()
 
+
   -- Display cropped profile
-  resetView()
+  viewer:clear()
   addProfile(profile, GRAY, 'Cropped profile')
   addProfile(croppedProfile, BLUE, '', true)
   presentAndWait()
 
   -- Display first derivative
-  resetView()
-  addProfile(firstDerivative, BLUE, 'First derivative')
+  viewer:clear()
+  addProfile(profile, GRAY, 'First derivative')
+  addProfile(firstDerivative, BLUE, '', true)
   presentAndWait()
 
   -- Display second derivative
-  resetView()
-  addProfile(profile, GRAY)
-  addProfile(secondDerivative, BLUE, 'Second derivative')
+  viewer:clear()
+  addProfile(profile, GRAY, 'Second derivative')
+  addProfile(secondDerivative, BLUE, '', true)
   presentAndWait()
 
   -- Display defect
-  resetView()
+  viewer:clear()
   addProfile(profile, GRAY, 'Defect in profile')
   addProfile(profileChanged, BLUE, '', true)
-  presentAndWait(DELAY)
+  presentAndWait()
   addProfile(delta, RED, '', true)
   presentAndWait()
 
   -- Display knees
-  resetView()
+  viewer:clear()
   addProfile(profile, BLUE, 'Knees of profile')
   addShape(knees, ORANGE, nil, 1.5)
   presentAndWait()
 
   --Display area
-  resetView()
+  viewer:clear()
   addProfile(profile, GRAY, 'Metadata of profile')
   addProfile(areaProfile, BLUE, '', true)
   addShape(createMeasurementShape(knees[1], knees[#knees]), RED, 0.5) --width measurement
