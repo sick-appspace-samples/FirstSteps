@@ -2,7 +2,10 @@
 -- Basic helper functions -----------
 -------------------------------------
 
---@getDeco(rgba:table, lineWidth:float, pointSize:float)
+---@param rgba table
+---@param lineWidth float
+---@param pointSize float
+---@return View.ShapeDecoration deco
 local function getDeco(rgba, lineWidth, pointSize)
   lineWidth = lineWidth or 1
   pointSize = pointSize or 1
@@ -20,7 +23,11 @@ local function getDeco(rgba, lineWidth, pointSize)
   return deco
 end
 
---@getTextDeco(rgba:table, size:float, xPos:float, yPos:float)
+---@param rgba table
+---@param size float
+---@param xPos float
+---@param yPos float
+---@return  View.TextDecoration deco
 local function getTextDeco(rgba, size, xPos, yPos)
   size = size or 1
   xPos = xPos or 0
@@ -38,7 +45,10 @@ local function getTextDeco(rgba, size, xPos, yPos)
   return deco
 end
 
---@interpolate(point1:float, point2:float, x:float)
+---@param point1 float
+---@param point2 float
+---@param x float
+---@return float
 local function interpolate(point1, point2, x)
   local distance = Point.getX(point2) - Point.getX(point1)
   local xPos = (x - Point.getX(point1)) / distance
@@ -60,7 +70,9 @@ local function polygonToProfile(polygon, sampleDistance)
   return Profile.createFromVector(valueVec, coordinateVec)
 end
 
---@getProfileBoundingBox(profiles:Profile)
+---@param profiles Profile
+---@return float min
+---@return float max
 local function getProfileBoundingBox(profiles)
   if type(profiles) ~= 'table' then
     profiles = {profiles}

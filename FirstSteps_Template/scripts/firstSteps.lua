@@ -57,7 +57,9 @@ local function graphDeco(color, headline, overlay)
   return deco
 end
 
---@createMeasurementShape(p1:Point, p2:Point)
+---@param p1 Point
+---@param p2 Point
+---@return Shape[] shapes
 local function createMeasurementShape(p1, p2)
   local mainLine = Shape.createLineSegment(p1, p2)
   local orthogonalVector = Point.transform(p2:subtract(p1), Transform.createRigid2D(math.pi / 2, 0, 0))
@@ -78,12 +80,19 @@ local function addProfile(p, c, headline, overlay)
   end
 end
 
---@addShape(s:Shape, c:table, lw:float, ps:float)
+---@param s Shape
+---@param c table
+---@param lw float
+---@param ps float
 local function addShape(s, c, lw, ps)
   viewer:addShape(s, helper.getDeco(c, lw, ps))
 end
 
---@addText(t:string, c:table, s:float, x:float, y:float)
+---@param t string
+---@param c table
+---@param s float
+---@param x float
+---@param y float
 local function addText(t, c, s, x, y)
   viewer:addText(t, helper.getTextDeco(c, s, x, y))
 end
@@ -94,7 +103,7 @@ local function resetView()
   addShape(xAxis, DARK_GRAY, 0.3)
 end
 
---@presentAndWait(delay:float)
+---@param delay float
 local function presentAndWait(delay)
   delay = delay or DELAY
   viewer:present()
